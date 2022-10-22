@@ -7,6 +7,7 @@ import { ColumnsType, TableProps } from "antd/lib/table";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
+import toast from "react-hot-toast";
 const { RangePicker } = DatePicker;
 
 interface ProductTableType {
@@ -120,7 +121,7 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
   const handleGotoBookingConfirmation = () => {
     let days = intendedBookingDays || 0;
     if (days < intendedBookingProduct?.minimum_rent_period!) {
-      alert(
+      toast.error(
         "Minimum rent period is " +
           intendedBookingProduct?.minimum_rent_period! +
           " days"
