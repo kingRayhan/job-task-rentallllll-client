@@ -120,7 +120,9 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
     {
       title: "Action",
       render: (row) => (
-        <Button onClick={() => setTntendedBookingProduct(row)}>Book</Button>
+        <Button type="primary" onClick={() => setTntendedBookingProduct(row)}>
+          Book
+        </Button>
       ),
     },
   ];
