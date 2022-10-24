@@ -1,12 +1,12 @@
-import { GetServerSidePropsContext, PreviewData } from 'next';
-import { ParsedUrlQuery } from 'querystring';
-import { httpClient } from '../api/client/api.client';
+import { GetServerSidePropsContext, PreviewData } from "next";
+import { ParsedUrlQuery } from "querystring";
+import { httpClient } from "../api/client/httpClient";
 
 export const ssr_authenticated = async (
-  context: GetServerSidePropsContext<ParsedUrlQuery, PreviewData>,
+  context: GetServerSidePropsContext<ParsedUrlQuery, PreviewData>
 ) => {
   try {
-    const _response = await httpClient.get('/user', {
+    const _response = await httpClient.get("/user", {
       withCredentials: true,
       headers: {
         // @ts-ignore

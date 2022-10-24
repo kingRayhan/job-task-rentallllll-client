@@ -1,5 +1,5 @@
 import authApiRepo from "@/app/api/repositories/auth.api-repo";
-import { signInWithGoogle } from "@/app/firebase/auth";
+import { signInWithGithub, signInWithGoogle } from "@/app/firebase/auth";
 import { AppContext } from "@/contexts/AppGlobalContextProvider";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "antd";
@@ -35,12 +35,13 @@ const LoginPage = () => {
         mutate__firebaseLogin(idToken);
       })
       .catch((error) => {
-        console.log(error);
+        console.log(error.message);
+        toast.error(error.message);
       });
   };
 
   const handleLoginWithGithub = () => {
-    signInWithGoogle()
+    signInWithGithub()
       .then((result) => {
         // @ts-ignore
         const idToken = result?._tokenResponse?.idToken;

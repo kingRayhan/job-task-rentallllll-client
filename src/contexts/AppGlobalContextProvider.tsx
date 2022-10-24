@@ -20,7 +20,9 @@ const AppContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
     isLoading: currentUserLoading,
     isFetched: currentUserFetched,
     refetch: currentUserRefetch,
-  } = useQuery(["auth:user"], () => userApiRepo.currentUser());
+  } = useQuery(["auth:user"], () => userApiRepo.currentUser(), {
+    retry: false,
+  });
 
   return (
     <AppContext.Provider

@@ -1,9 +1,12 @@
+import bookingsApiRepo from "@/app/api/repositories/bookings.api-repo";
 import productsApiRepo from "@/app/api/repositories/products.api-repo";
 import { Product } from "@/app/models/Product.model";
+import { ssr_authenticated } from "@/app/utils/ssr_authenticated";
 import { SearchOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, DatePicker, Input, Modal, Table } from "antd";
 import { ColumnsType, TableProps } from "antd/lib/table";
+import { AxiosError } from "axios";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
@@ -37,6 +40,8 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
     useState<ProductTableType | null>(null);
 
   const [intendedBookingDays, setIntendedBookingDays] = useState<number>();
+  const [intendedBookingDateRange, setIntendedBookingDateRange] =
+    useState<any[]>();
 
   const { data: products, isFetching } = useQuery(
     ["products", searchQuery, sortBy],
@@ -52,6 +57,23 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
     },
     { initialData: initialProducts }
   );
+
+  const { mutate: mutate__bookConfirm } = useMutation(
+    bookingsApiRepo.bookProduct,
+    {
+      onSuccess: () => {
+        toast.success("Booking successful");
+        cancelAllModal();
+      },
+      onError: (error: AxiosError) => {
+        if (error.response?.status === 403) {
+          // @ts-ignore
+          toast.error(error.response?.data?.message);
+        }
+      },
+    }
+  );
+
   const columns: ColumnsType<ProductTableType> = [
     {
       title: "Name",
@@ -131,8 +153,18 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
     }
   };
 
+  const cancelAllModal = () => {
+    setTntendedBookingProduct(null);
+    setIntendedBookingDays(0);
+    setBookingConfirmationModalVisible(false);
+  };
+
   const handleConfirmRent = () => {
-    alert("Confirm");
+    mutate__bookConfirm({
+      product: intendedBookingProduct.key.toString(),
+      start_date: new Date(intendedBookingDateRange[0]),
+      estimated_end_date: new Date(intendedBookingDateRange[1]),
+    });
   };
 
   return (
@@ -182,11 +214,13 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
         <h1 className="text-2xl font-semibold">
           {intendedBookingProduct?.name}
         </h1>
+        <p>Minimum Rent days: {intendedBookingProduct?.minimum_rent_period}</p>
         <RangePicker
           onChange={(dates) => {
             if (dates) {
               const days = dates![1]?.diff(dates![0], "days");
               setIntendedBookingDays(days);
+              setIntendedBookingDateRange(dates);
             }
           }}
         />
@@ -195,11 +229,7 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
         title="Confirm Booking"
         open={bookingConfirmationModalVisible}
         onOk={handleConfirmRent}
-        onCancel={() => {
-          setTntendedBookingProduct(null);
-          setIntendedBookingDays(0);
-          setBookingConfirmationModalVisible(false);
-        }}
+        onCancel={cancelAllModal}
       >
         <h1 className="text-2xl font-semibold">
           You estimated price is $
@@ -214,6 +244,9 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
 export default Home;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
+  const user = await ssr_authenticated(context);
+  if (!user) return { redirect: { destination: "/login", permanent: false } };
+
   const res = await productsApiRepo.getProducts({ limit: 10, page: 1 });
   return {
     props: {
