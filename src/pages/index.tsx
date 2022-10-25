@@ -145,11 +145,11 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
     }
   };
 
-  const { currentUserId } = useContext(AppContext);
+  const { currentUserId, currentUserLoading } = useContext(AppContext);
 
   useEffect(() => {
-    if (!currentUserId) router.push("/login");
-  }, [currentUserId]);
+    if (!currentUserLoading) if (!currentUserId) router.push("/login");
+  }, [currentUserId, currentUserLoading]);
 
   const handleGotoBookingConfirmation = () => {
     let days = intendedBookingDays || 0;

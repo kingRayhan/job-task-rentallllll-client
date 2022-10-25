@@ -31,12 +31,12 @@ interface Props {
   initialBookings: Booking[];
 }
 const BookingsPage: NextPage<Props> = () => {
-  const { currentUserId } = useContext(AppContext);
+  const { currentUserId, currentUserLoading } = useContext(AppContext);
   const router = useRouter();
 
   useEffect(() => {
-    if (!currentUserId) router.push("/login");
-  }, [currentUserId]);
+    if (!currentUserLoading) if (!currentUserId) router.push("/login");
+  }, [currentUserId, currentUserLoading]);
 
   const [filterMode, setFilterMode] = useState<BOOKING_STATUS | null>(null);
   const [intendedBooking, setIntendedBooking] =
