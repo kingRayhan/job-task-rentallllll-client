@@ -2,6 +2,7 @@ import bookingsApiRepo from "@/app/api/repositories/bookings.api-repo";
 import productsApiRepo from "@/app/api/repositories/products.api-repo";
 import { Product } from "@/app/models/Product.model";
 import { ssr_authenticated } from "@/app/utils/ssr_authenticated";
+import { AppContext } from "@/contexts/AppGlobalContextProvider";
 import { SearchOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, DatePicker, Input, Modal, Table } from "antd";
@@ -9,7 +10,8 @@ import { ColumnsType, TableProps } from "antd/lib/table";
 import { AxiosError } from "axios";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 const { RangePicker } = DatePicker;
 
@@ -30,6 +32,7 @@ interface Props {
 }
 
 const Home: NextPage<Props> = ({ initialProducts }) => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSorter] = useState<string | null>(null);
 
@@ -142,6 +145,12 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
     }
   };
 
+  const { currentUserId } = useContext(AppContext);
+
+  useEffect(() => {
+    if (!currentUserId) router.push("/login");
+  }, [currentUserId]);
+
   const handleGotoBookingConfirmation = () => {
     let days = intendedBookingDays || 0;
     if (days < intendedBookingProduct?.minimum_rent_period!) {
@@ -246,9 +255,6 @@ const Home: NextPage<Props> = ({ initialProducts }) => {
 export default Home;
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const user = await ssr_authenticated(context);
-  if (!user) return { redirect: { destination: "/login", permanent: false } };
-
   const res = await productsApiRepo.getProducts({ limit: 10, page: 1 });
   return {
     props: {

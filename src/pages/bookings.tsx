@@ -3,13 +3,15 @@ import bookingsApiRepo, {
 } from "@/app/api/repositories/bookings.api-repo";
 import { Booking, BOOKING_STATUS } from "@/app/models/Booking.model";
 import { ssr_authenticated } from "@/app/utils/ssr_authenticated";
+import { AppContext } from "@/contexts/AppGlobalContextProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Modal, Radio, Table, Tag } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { format } from "date-fns";
 import { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import { useRouter } from "next/router";
+import { useContext, useEffect, useState } from "react";
 
 interface ReturnBookMutationPayload extends BookReturnedPayload {
   bookingId: string;
@@ -29,6 +31,13 @@ interface Props {
   initialBookings: Booking[];
 }
 const BookingsPage: NextPage<Props> = () => {
+  const { currentUserId } = useContext(AppContext);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!currentUserId) router.push("/login");
+  }, [currentUserId]);
+
   const [filterMode, setFilterMode] = useState<BOOKING_STATUS | null>(null);
   const [intendedBooking, setIntendedBooking] =
     useState<BookingTableType | null>(null);
@@ -84,14 +93,13 @@ const BookingsPage: NextPage<Props> = () => {
     {
       title: "Estimated return date",
       dataIndex: "estimated_end_date",
+      render: (value) => format(new Date(value), "dd/MM/yyyy - HH:mm aa"),
     },
     {
       title: "Returned at",
       dataIndex: "returned_at",
-      render: (returned_at) =>
-        returned_at
-          ? format(new Date(returned_at), "dd/MM/yyyy - HH:mm aa")
-          : "N/A",
+      render: (value) =>
+        value ? format(new Date(value), "dd/MM/yyyy - HH:mm aa") : "N/A",
     },
     {
       title: "Cost",
@@ -176,10 +184,10 @@ const BookingsPage: NextPage<Props> = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const user = await ssr_authenticated(context);
-  if (!user) return { redirect: { destination: "/login", permanent: false } };
-  return { props: {} };
-};
+// export const getServerSideProps: GetServerSideProps = async (context) => {
+//   const user = await ssr_authenticated(context);
+//   if (!user) return { redirect: { destination: "/login", permanent: false } };
+//   return { props: {} };
+// };
 
 export default BookingsPage;

@@ -15,7 +15,7 @@ const Navbar = () => {
     authApiRepo.logout,
     {
       onSuccess: () => {
-        // qc.invalidateQueries(["auth:user"]);
+        qc.invalidateQueries(["auth:user"]);
         window.location.reload();
       },
       onError: () => {
