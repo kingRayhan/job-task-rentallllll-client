@@ -171,6 +171,7 @@ const BookingsPage: NextPage<Props> = () => {
         <b>Estimated return time:</b>{" "}
         {intendedBooking?.estimated_end_date.toString()}
       </Modal>
+      {/* ddd */}
     </div>
   );
 };
