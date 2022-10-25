@@ -10,7 +10,7 @@ class BookingApiRepo {
   }
 
   /**
-   *
+   * My bookings
    * @param payload
    * @returns
    */
@@ -18,6 +18,18 @@ class BookingApiRepo {
     payload: MyBookingListPayload
   ): Promise<AppAxiosResponse<PaginatedResponse<Booking>>> {
     return httpClient.get("/bookings/my-bookings", { params: payload });
+  }
+
+  /**
+   *
+   * @param payload
+   * @returns
+   */
+  public returnBooking(
+    bookingId: string,
+    payload: BookReturnedPayload
+  ): Promise<AppAxiosResponse<any>> {
+    return httpClient.put(`/bookings/return/${bookingId}`, payload);
   }
 }
 export default new BookingApiRepo();
@@ -30,6 +42,10 @@ export interface BookProductPayload {
   product: string;
   start_date: Date;
   estimated_end_date: Date;
+}
+
+export interface BookReturnedPayload {
+  need_repair: boolean;
 }
 
 export interface MyBookingListPayload extends CommonPaginationDto {

@@ -13,8 +13,8 @@ export interface Booking {
   booked_for_days: number;
   need_repair: boolean;
   status: BOOKING_STATUS;
-  price: number;
-  start_date: Date;
+  rent_price: number;
+  borrowed_at: Date;
   estimated_end_date: Date;
   returned_at: Date | null;
   createdAt: Date;

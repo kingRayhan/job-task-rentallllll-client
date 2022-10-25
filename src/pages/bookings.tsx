@@ -1,33 +1,58 @@
-import bookingsApiRepo from "@/app/api/repositories/bookings.api-repo";
+import bookingsApiRepo, {
+  BookReturnedPayload,
+} from "@/app/api/repositories/bookings.api-repo";
 import { BOOKING_STATUS } from "@/app/models/Booking.model";
 import { ssr_authenticated } from "@/app/utils/ssr_authenticated";
-import { useQuery } from "@tanstack/react-query";
-import { Button, Radio, Table } from "antd";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Button, Modal, Radio, Table, Tag } from "antd";
 import { ColumnsType } from "antd/lib/table";
+import { format } from "date-fns";
 import { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 
+interface ReturnBookMutationPayload extends BookReturnedPayload {
+  bookingId: string;
+}
+
 interface BookingTableType {
+  id: string;
   product: string;
   status: "CONSUMING" | "RETURNED";
   borrowed_at: Date;
-  price: number;
+  rent_price: number;
   returned_at: Date;
   estimated_end_date: Date;
 }
 const BookingsPage: NextPage = () => {
   const [filterMode, setFilterMode] = useState<BOOKING_STATUS | null>(null);
+  const [intendedBooking, setIntendedBooking] =
+    useState<BookingTableType | null>(null);
 
-  const { data: myBookings, isFetching } = useQuery(
-    ["myBookings", filterMode],
-    async () => {
-      const { data } = await bookingsApiRepo.myBookings({
-        limit: 100,
-        page: 1,
-        status: filterMode,
+  const {
+    data: myBookings,
+    isFetching,
+    refetch,
+  } = useQuery(["myBookings", filterMode], async () => {
+    const { data } = await bookingsApiRepo.myBookings({
+      limit: 100,
+      page: 1,
+      status: filterMode,
+    });
+    return data?.data?.contents;
+  });
+
+  const { mutate: mutate__returnBooking } = useMutation(
+    (variables: ReturnBookMutationPayload) => {
+      return bookingsApiRepo.returnBooking(variables.bookingId, {
+        need_repair: variables.need_repair,
       });
-      return data?.data?.contents;
+    },
+    {
+      onSuccess: () => {
+        setIntendedBooking(null);
+        refetch();
+      },
     }
   );
 
@@ -39,10 +64,18 @@ const BookingsPage: NextPage = () => {
     {
       title: "Status",
       dataIndex: "status",
+      render: (status) =>
+        status === "CONSUMING" ? (
+          <Tag color="magenta">Consuming</Tag>
+        ) : (
+          <Tag color="green">Returned</Tag>
+        ),
     },
     {
       title: "Borrowed at",
       dataIndex: "borrowed_at",
+      render: (borrowed_at) =>
+        format(new Date(borrowed_at), "dd/MM/yyyy - HH:mm aa"),
     },
     {
       title: "Estimated return date",
@@ -51,18 +84,36 @@ const BookingsPage: NextPage = () => {
     {
       title: "Returned at",
       dataIndex: "returned_at",
-      render: (returned_at) => (returned_at ? returned_at : "Not returned yet"),
+      render: (returned_at) =>
+        returned_at
+          ? format(new Date(returned_at), "dd/MM/yyyy - HH:mm aa")
+          : "N/A",
     },
     {
       title: "Cost",
-      dataIndex: "price",
-      render: (price) => (price === 0 ? "Not calculated yet" : price),
+      dataIndex: "rent_price",
+      render: (rent_price) =>
+        rent_price === 0
+          ? "Will be calculated during return"
+          : `$${rent_price}`,
     },
     {
       title: "Action",
-      render: () => <Button type="primary">Return</Button>,
+      render: (row) =>
+        !row.returned_at && (
+          <Button type="primary" onClick={() => setIntendedBooking(row)}>
+            Return
+          </Button>
+        ),
     },
   ];
+
+  const handleReturnBooking = (row: BookingTableType) => {
+    mutate__returnBooking({
+      bookingId: row.id,
+      need_repair: false,
+    });
+  };
 
   return (
     <div>
@@ -73,6 +124,17 @@ const BookingsPage: NextPage = () => {
       </Head>
 
       <main>
+        <Modal
+          title="Confirm Return"
+          open={Boolean(intendedBooking)}
+          onCancel={() => setIntendedBooking(null)}
+          onOk={() => handleReturnBooking(intendedBooking!)}
+          okText="Return"
+        >
+          <h1 className="text-xl">{intendedBooking?.product}</h1>
+          <b>Borrowed at:</b> {intendedBooking?.borrowed_at} <br />
+          <b>Estimated return time:</b> {intendedBooking?.estimated_end_date}
+        </Modal>
         <h1 className="text-xl font-semibold">My bookings</h1>
 
         <div className="my-2">
@@ -93,11 +155,12 @@ const BookingsPage: NextPage = () => {
           columns={columns}
           pagination={false}
           dataSource={myBookings?.map((booking) => ({
+            id: booking._id,
             product: booking.product.name,
             status: booking.status,
-            borrowed_at: booking.start_date,
+            borrowed_at: booking.borrowed_at,
             estimated_end_date: booking.estimated_end_date,
-            price: booking.price,
+            rent_price: booking.rent_price,
             returned_at: booking.returned_at,
           }))}
           loading={isFetching}

@@ -33,7 +33,7 @@ const Navbar = () => {
 
         {currentUserId && (
           <Link href="/bookings">
-            <a className="text-xl text-slate-800">My Bookings</a>
+            <a className="text-base uppercase text-slate-800">My Bookings</a>
           </Link>
         )}
       </nav>
