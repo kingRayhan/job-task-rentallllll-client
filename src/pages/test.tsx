@@ -1,20 +1,18 @@
 import bookingsApiRepo, {
   BookReturnedPayload,
 } from "@/app/api/repositories/bookings.api-repo";
-import { Booking, BOOKING_STATUS } from "@/app/models/Booking.model";
-import { ssr_authenticated } from "@/app/utils/ssr_authenticated";
+import { BOOKING_STATUS } from "@/app/models/Booking.model";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button, Modal, Radio, Table, Tag } from "antd";
-import { ColumnsType } from "antd/lib/table";
+import { Button, Radio, Tag } from "antd";
+import Modal from "antd/lib/modal/Modal";
+import Table, { ColumnsType } from "antd/lib/table";
 import { format } from "date-fns";
-import { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface ReturnBookMutationPayload extends BookReturnedPayload {
   bookingId: string;
 }
-
 interface BookingTableType {
   id: string;
   product: string;
@@ -25,10 +23,7 @@ interface BookingTableType {
   estimated_end_date: Date;
 }
 
-interface Props {
-  initialBookings: Booking[];
-}
-const BookingsPage: NextPage<Props> = () => {
+const BookingPage = () => {
   const [filterMode, setFilterMode] = useState<BOOKING_STATUS | null>(null);
   const [intendedBooking, setIntendedBooking] =
     useState<BookingTableType | null>(null);
@@ -127,38 +122,6 @@ const BookingsPage: NextPage<Props> = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main>
-        <h1 className="text-xl font-semibold">My bookings</h1>
-
-        <div className="my-2">
-          <Radio.Group onChange={(e) => setFilterMode(e.target.value)}>
-            <Radio.Button type="primary" value={null}>
-              No Filter
-            </Radio.Button>
-            <Radio.Button type="primary" value="CONSUMING">
-              Currently Using
-            </Radio.Button>
-            <Radio.Button type="primary" value="RETURNED">
-              Returned
-            </Radio.Button>
-          </Radio.Group>
-        </div>
-
-        <Table
-          columns={columns}
-          pagination={false}
-          dataSource={myBookings?.map((booking) => ({
-            id: booking._id,
-            product: booking.product.name,
-            status: booking.status,
-            borrowed_at: booking.borrowed_at,
-            estimated_end_date: booking.estimated_end_date,
-            rent_price: booking.rent_price,
-            returned_at: booking.returned_at,
-          }))}
-          loading={isFetching}
-        />
-      </main>
       <Modal
         title="Confirm Return"
         open={Boolean(intendedBooking)}
@@ -166,19 +129,12 @@ const BookingsPage: NextPage<Props> = () => {
         onOk={() => handleReturnBooking(intendedBooking!)}
         okText="Return"
       >
-        <h1 className="text-xl">{intendedBooking?.product}</h1>
-        <b>Borrowed at:</b> {intendedBooking?.borrowed_at.toString()} <br />
-        <b>Estimated return time:</b>{" "}
-        {intendedBooking?.estimated_end_date.toString()}
+        <h1>Hello</h1>
+        <h1>Hello2</h1>
+        <h1>Hello3</h1>
       </Modal>
     </div>
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const user = await ssr_authenticated(context);
-  if (!user) return { redirect: { destination: "/login", permanent: false } };
-  return { props: {} };
-};
-
-export default BookingsPage;
+export default BookingPage;
